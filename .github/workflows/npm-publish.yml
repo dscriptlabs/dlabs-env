@@ -27,28 +27,31 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Check version and increment
+      - name: Configure git
         run: |
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
-          VERSION=$(node -p "require('./package.json').version")
-          if npm view dlabs-env@$VERSION version >/dev/null 2>&1; then
-            echo "Version $VERSION already exists, incrementing..."
-            npm version patch -m "Bump version to %s [skip ci]"
-          else
-            echo "Version $VERSION does not exist, incrementing anyway for consistency"
-            npm version patch -m "Bump version to %s [skip ci]"
-          fi
+
+      - name: Increment version
+        id: version
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "Current version: $CURRENT_VERSION"
+          npm version patch -m "Bump version to %s [skip ci]"
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          echo "New version: $NEW_VERSION"
 
       - name: Build
         run: npm run build
 
       - name: Publish to NPM
-        run: npm publish
+        if: success()
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Push version changes
+        if: success()
         run: |
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}
           git push --follow-tags
