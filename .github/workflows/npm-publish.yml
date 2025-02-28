@@ -64,15 +64,76 @@ jobs:
           # Get the last tag
           LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
 
+          generate_changelog() {
+            # Group commits by type
+            echo "$1" | while read -r line; do
+              if [[ $line =~ ^"feat"[(:)] ]]; then
+                echo "feat|✨ Features|$line"
+              elif [[ $line =~ ^"fix"[(:)] ]]; then
+                echo "fix|🐛 Bug Fixes|$line"
+              elif [[ $line =~ ^"docs"[(:)] ]]; then
+                echo "docs|📚 Documentation|$line"
+              elif [[ $line =~ ^"style"[(:)] ]]; then
+                echo "style|💎 Styles|$line"
+              elif [[ $line =~ ^"refactor"[(:)] ]]; then
+                echo "refactor|♻️ Code Refactoring|$line"
+              elif [[ $line =~ ^"perf"[(:)] ]]; then
+                echo "perf|⚡ Performance Improvements|$line"
+              elif [[ $line =~ ^"test"[(:)] ]]; then
+                echo "test|✅ Tests|$line"
+              elif [[ $line =~ ^"build"[(:)] ]]; then
+                echo "build|📦 Build System|$line"
+              elif [[ $line =~ ^"ci"[(:)] ]]; then
+                echo "ci|👷 CI/CD|$line"
+              elif [[ $line =~ ^"chore"[(:)] ]]; then
+                echo "chore|🔧 Chores|$line"
+              else
+                echo "other|🔍 Other Changes|$line"
+              fi
+            done | sort -t'|' -k1,1 | awk -F'|' '
+              function print_section(section, content) {
+                if (content != "") {
+                  print "\n### " section
+                  print content
+                }
+              }
+              BEGIN { 
+                current_section = ""
+                section_content = ""
+              }
+              {
+                if ($2 != current_section && section_content != "") {
+                  print_section(current_section, section_content)
+                  section_content = ""
+                }
+                current_section = $2
+                commit_msg = $3
+                gsub(/^(feat|fix|docs|style|refactor|perf|test|build|ci|chore)(\([^)]+\))?:/, "", commit_msg)
+                section_content = section_content "* " commit_msg "\n"
+              }
+              END {
+                if (section_content != "") {
+                  print_section(current_section, section_content)
+                }
+              }'
+          }
+
           if [ -z "$LAST_TAG" ]; then
             # If no previous tag exists, get all commits
-            RELEASE_BODY="## 🚀 First Release v${{ env.version }}\n\n### 📝 Commit History\n"
-            RELEASE_BODY+=$(git log --pretty=format:"* %s (%h)%n")
+            RELEASE_BODY="## 🎉 First Release v${{ env.version }}\n"
+            COMMITS=$(git log --pretty=format:"%s (%h)")
           else
             # Get commits since last tag
-            RELEASE_BODY="## 🚀 Release v${{ env.version }}\n\n### 📝 Changes since ${LAST_TAG}\n"
-            RELEASE_BODY+=$(git log "$LAST_TAG"..HEAD --pretty=format:"* %s (%h)%n")
+            RELEASE_BODY="## 🚀 Release v${{ env.version }}\n"
+            COMMITS=$(git log "$LAST_TAG"..HEAD --pretty=format:"%s (%h)")
           fi
+
+          # Generate and append changelog
+          CHANGELOG=$(echo "$COMMITS" | generate_changelog)
+          RELEASE_BODY+="$CHANGELOG"
+
+          # Add footer
+          RELEASE_BODY+="\n\n---\n*Full Changelog: [$LAST_TAG...v${{ env.version }}](https://github.com/${{ github.repository }}/compare/$LAST_TAG...v${{ env.version }})*"
 
           # Escape multiline string for GitHub Actions
           RELEASE_BODY="${RELEASE_BODY//'%'/'%25'}"
