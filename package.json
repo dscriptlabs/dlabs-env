@@ -1,6 +1,6 @@
 {
   "name": "dlabs-env",
-  "version": "0.0.17",
+  "version": "0.0.19",
   "description": "A CLI tool for environment variable management",
   "main": "dist/index.js",
   "bin": {
