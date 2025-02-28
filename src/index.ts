@@ -2,6 +2,7 @@
 
 import { Command } from 'commander'
 import { checkStatus } from './commands'
+import { initCommand } from './commands/init'
 
 const program = new Command()
 
@@ -11,4 +12,5 @@ program
   .version('0.0.1')
 
 program.addCommand(checkStatus)
+program.addCommand(initCommand)
 program.parse()
