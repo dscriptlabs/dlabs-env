@@ -23,7 +23,6 @@ jobs:
         with:
           node-version: '20.x'
           registry-url: 'https://registry.npmjs.org/'
-          scope: '@dscriptlabs'
 
       - name: Install dependencies
         run: npm ci
@@ -61,6 +60,9 @@ jobs:
   publish-gpr:
     needs: publish-npm
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
 
@@ -68,26 +70,24 @@ jobs:
         with:
           node-version: '20.x'
           registry-url: 'https://npm.pkg.github.com'
-
-      - name: Configure Package for GPR
-        run: |
-          echo "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}" > .npmrc
-          echo "@dscriptlabs:registry=https://npm.pkg.github.com" >> .npmrc
-          # Temporarily modify package.json for GitHub Package Registry
-          sed -i 's/"name": "dlabs-env"/"name": "@dscriptlabs\/env"/' package.json
+          scope: '@dscriptlabs'
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          echo "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}" > .npmrc
+          npm ci
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build
         run: npm run build
 
       - name: Publish to GitHub Package Registry
-        run: npm publish
+        run: |
+          echo "registry=https://npm.pkg.github.com/@dscriptlabs" >> .npmrc
+          npm publish
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push version changes
         if: success()
