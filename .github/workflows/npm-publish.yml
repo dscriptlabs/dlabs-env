@@ -1,9 +1,8 @@
 name: NPM Publish
 
 on:
-  push:
-    branches:
-      - main
+  release:
+    types: [created]
   workflow_dispatch:
 
 permissions:
@@ -47,37 +46,17 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Bump version
+      - name: Update Version
         run: |
-          # Get package name from package.json
-          PACKAGE_NAME=$(node -p "require('./package.json').name")
-          echo "Package name: $PACKAGE_NAME"
-
-          # Get latest version from npm
-          NPM_VERSION=$(npm view $PACKAGE_NAME version 2>/dev/null || echo "0.0.0")
-          echo "Latest npm version: $NPM_VERSION"
-
-          # Split version into parts
-          IFS='.' read -r -a version_parts <<< "$NPM_VERSION"
-          MAJOR="${version_parts[0]}"
-          MINOR="${version_parts[1]}"
-          PATCH="${version_parts[2]}"
-
-          # Increment patch version
-          NEW_PATCH=$((PATCH + 1))
-          NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
-          echo "New version: $NEW_VERSION"
+          # Get version from release tag
+          RELEASE_VERSION=${GITHUB_REF#refs/tags/v}
+          echo "Updating to version: $RELEASE_VERSION"
 
           # Update package.json
-          npm version $NEW_VERSION --no-git-tag-version --allow-same-version
+          npm version $RELEASE_VERSION --no-git-tag-version --allow-same-version
 
-          # Stage and commit the changes
-          git add package.json
-          git commit -m "chore: bump version to $NEW_VERSION"
-          git tag "v$NEW_VERSION"
-
-          # Store new version for later use
-          echo "version=$NEW_VERSION" >> $GITHUB_ENV
+          # Store version for later use
+          echo "version=$RELEASE_VERSION" >> $GITHUB_ENV
 
       - name: Build and Publish to NPM
         if: success()
@@ -88,113 +67,11 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Generate Release Notes
+      - name: Push package.json update
         if: success()
         run: |
-          # Get the previous version (one before our new version)
-          PREV_VERSION=$(git tag -l 'v*' --sort=-v:refname | sed -n 2p || echo "")
-
-          generate_changelog() {
-            # Group commits by type
-            echo "$1" | while read -r line; do
-              if [[ $line =~ ^"feat"[(:)] ]]; then
-                echo "feat|✨ Features|$line"
-              elif [[ $line =~ ^"fix"[(:)] ]]; then
-                echo "fix|🐛 Bug Fixes|$line"
-              elif [[ $line =~ ^"docs"[(:)] ]]; then
-                echo "docs|📚 Documentation|$line"
-              elif [[ $line =~ ^"style"[(:)] ]]; then
-                echo "style|💎 Styles|$line"
-              elif [[ $line =~ ^"refactor"[(:)] ]]; then
-                echo "refactor|♻️ Code Refactoring|$line"
-              elif [[ $line =~ ^"perf"[(:)] ]]; then
-                echo "perf|⚡ Performance Improvements|$line"
-              elif [[ $line =~ ^"test"[(:)] ]]; then
-                echo "test|✅ Tests|$line"
-              elif [[ $line =~ ^"build"[(:)] ]]; then
-                echo "build|📦 Build System|$line"
-              elif [[ $line =~ ^"ci"[(:)] ]]; then
-                echo "ci|👷 CI/CD|$line"
-              elif [[ $line =~ ^"chore"[(:)] ]]; then
-                echo "chore|🔧 Chores|$line"
-              else
-                echo "other|🔍 Other Changes|$line"
-              fi
-            done | sort -t'|' -k1,1 | awk -F'|' '
-              function print_section(section, content) {
-                if (content != "") {
-                  print "\n### " section
-                  print content
-                }
-              }
-              BEGIN { 
-                current_section = ""
-                section_content = ""
-              }
-              {
-                if ($2 != current_section && section_content != "") {
-                  print_section(current_section, section_content)
-                  section_content = ""
-                }
-                current_section = $2
-                commit_msg = $3
-                gsub(/^(feat|fix|docs|style|refactor|perf|test|build|ci|chore)(\([^)]+\))?:/, "", commit_msg)
-                section_content = section_content "* " commit_msg "\n"
-              }
-              END {
-                if (section_content != "") {
-                  print_section(current_section, section_content)
-                }
-              }'
-          }
-
-          if [ -z "$PREV_VERSION" ]; then
-            # If no previous version exists, this is the first release
-            RELEASE_BODY="## 🎉 First Release v${{ env.version }}\n"
-            COMMITS=$(git log --pretty=format:"%s (%h)")
-            
-            # Generate and append changelog
-            CHANGELOG=$(echo "$COMMITS" | generate_changelog)
-            RELEASE_BODY+="$CHANGELOG"
-            
-            # Add first release footer
-            RELEASE_BODY+="\n\n---\n*First Release*"
-          else
-            # For subsequent releases
-            RELEASE_BODY="## 🚀 Release v${{ env.version }}\n"
-            COMMITS=$(git log "${PREV_VERSION}..HEAD" --pretty=format:"%s (%h)")
-            
-            # Generate and append changelog
-            CHANGELOG=$(echo "$COMMITS" | generate_changelog)
-            RELEASE_BODY+="$CHANGELOG"
-            
-            # Add comparison footer
-            RELEASE_BODY+="\n\n---\n*Full Changelog: [${PREV_VERSION}...v${{ env.version }}](https://github.com/${{ github.repository }}/compare/${PREV_VERSION}...v${{ env.version }})*"
-          fi
-
-          # Escape multiline string for GitHub Actions
-          RELEASE_BODY="${RELEASE_BODY//'%'/'%25'}"
-          RELEASE_BODY="${RELEASE_BODY//$'\n'/'%0A'}"
-          RELEASE_BODY="${RELEASE_BODY//$'\r'/'%0D'}"
-
-          echo "RELEASE_BODY=$RELEASE_BODY" >> $GITHUB_ENV
-
-      - name: Push version changes
-        if: success()
-        run: |
-          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}
-          git push --follow-tags
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create GitHub Release
-        if: success()
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: v${{ env.version }}
-          name: Release v${{ env.version }}
-          body: ${{ env.RELEASE_BODY }}
-          draft: false
-          prerelease: false
+          git add package.json
+          git commit -m "chore: update package.json to version ${{ env.version }}" || echo "No changes to commit"
+          git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
