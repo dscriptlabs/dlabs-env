@@ -1,6 +1,6 @@
 {
-  "name": "@dscriptlabs/env",
-  "version": "0.0.3",
+  "name": "dlabs-env",
+  "version": "0.0.1",
   "description": "A CLI tool for environment variable management",
   "main": "dist/index.js",
   "bin": {
