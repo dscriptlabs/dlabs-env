@@ -91,8 +91,8 @@ jobs:
       - name: Generate Release Notes
         if: success()
         run: |
-          # Get the last tag
-          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          # Get the previous version (one before our new version)
+          PREV_VERSION=$(git tag -l 'v*' --sort=-v:refname | sed -n 2p || echo "")
 
           generate_changelog() {
             # Group commits by type
@@ -148,27 +148,28 @@ jobs:
               }'
           }
 
-          if [ -z "$LAST_TAG" ]; then
-            # If no previous tag exists, get all commits
+          if [ -z "$PREV_VERSION" ]; then
+            # If no previous version exists, this is the first release
             RELEASE_BODY="## 🎉 First Release v${{ env.version }}\n"
             COMMITS=$(git log --pretty=format:"%s (%h)")
-          else
-            # Get commits since last tag
-            RELEASE_BODY="## 🚀 Release v${{ env.version }}\n"
-            COMMITS=$(git log "$LAST_TAG"..HEAD --pretty=format:"%s (%h)")
-          fi
-
-          # Generate and append changelog
-          CHANGELOG=$(echo "$COMMITS" | generate_changelog)
-          RELEASE_BODY+="$CHANGELOG"
-
-          # Add footer with proper comparison link
-          if [ -z "$LAST_TAG" ]; then
-            # For first release, just link to the release tag
+            
+            # Generate and append changelog
+            CHANGELOG=$(echo "$COMMITS" | generate_changelog)
+            RELEASE_BODY+="$CHANGELOG"
+            
+            # Add first release footer
             RELEASE_BODY+="\n\n---\n*First Release*"
           else
-            # For subsequent releases, show comparison
-            RELEASE_BODY+="\n\n---\n*Full Changelog: [$LAST_TAG...v${{ env.version }}](https://github.com/${{ github.repository }}/compare/$LAST_TAG...v${{ env.version }})*"
+            # For subsequent releases
+            RELEASE_BODY="## 🚀 Release v${{ env.version }}\n"
+            COMMITS=$(git log "${PREV_VERSION}..HEAD" --pretty=format:"%s (%h)")
+            
+            # Generate and append changelog
+            CHANGELOG=$(echo "$COMMITS" | generate_changelog)
+            RELEASE_BODY+="$CHANGELOG"
+            
+            # Add comparison footer
+            RELEASE_BODY+="\n\n---\n*Full Changelog: [${PREV_VERSION}...v${{ env.version }}](https://github.com/${{ github.repository }}/compare/${PREV_VERSION}...v${{ env.version }})*"
           fi
 
           # Escape multiline string for GitHub Actions
