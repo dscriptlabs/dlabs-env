@@ -47,14 +47,44 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Bump version
+        run: |
+          # Get package name from package.json
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          echo "Package name: $PACKAGE_NAME"
+
+          # Get latest version from npm
+          NPM_VERSION=$(npm view $PACKAGE_NAME version 2>/dev/null || echo "0.0.0")
+          echo "Latest npm version: $NPM_VERSION"
+
+          # Split version into parts
+          IFS='.' read -r -a version_parts <<< "$NPM_VERSION"
+          MAJOR="${version_parts[0]}"
+          MINOR="${version_parts[1]}"
+          PATCH="${version_parts[2]}"
+
+          # Increment patch version
+          NEW_PATCH=$((PATCH + 1))
+          NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
+          echo "New version: $NEW_VERSION"
+
+          # Update package.json
+          npm version $NEW_VERSION --no-git-tag-version --allow-same-version
+
+          # Stage and commit the changes
+          git add package.json
+          git commit -m "chore: bump version to $NEW_VERSION"
+          git tag "v$NEW_VERSION"
+
+          # Store new version for later use
+          echo "version=$NEW_VERSION" >> $GITHUB_ENV
+
       - name: Build and Publish to NPM
         if: success()
         run: |
-          CURRENT_VERSION=$(node -p "require('./package.json').version")
-          echo "Publishing version: $CURRENT_VERSION"
+          echo "Publishing version: ${{ env.version }}"
           npm run build
           npm publish --access public
-          echo "version=$CURRENT_VERSION" >> $GITHUB_ENV
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
