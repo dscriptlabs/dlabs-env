@@ -54,8 +54,34 @@ jobs:
           echo "Publishing version: $CURRENT_VERSION"
           npm run build
           npm publish --access public
+          echo "version=$CURRENT_VERSION" >> $GITHUB_ENV
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Generate Release Notes
+        if: success()
+        run: |
+          # Get the last tag
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+
+          if [ -z "$LAST_TAG" ]; then
+            # If no previous tag exists, get all commits
+            echo "## 🚀 First Release v${{ env.version }}" > RELEASE_NOTES.md
+            echo "" >> RELEASE_NOTES.md
+            echo "### 📝 Commit History" >> RELEASE_NOTES.md
+            git log --pretty=format:"* %s (%h)" >> RELEASE_NOTES.md
+          else
+            # Get commits since last tag
+            echo "## 🚀 Release v${{ env.version }}" > RELEASE_NOTES.md
+            echo "" >> RELEASE_NOTES.md
+            echo "### 📝 Changes since $LAST_TAG" >> RELEASE_NOTES.md
+            git log "$LAST_TAG"..HEAD --pretty=format:"* %s (%h)" >> RELEASE_NOTES.md
+          fi
+
+          # Save release notes to GitHub env
+          echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
+          cat RELEASE_NOTES.md >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - name: Push version changes
         if: success()
@@ -64,3 +90,15 @@ jobs:
           git push --follow-tags
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Release
+        if: success()
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ env.version }}
+          release_name: Release v${{ env.version }}
+          draft: false
+          prerelease: false
+          body: ${{ env.RELEASE_NOTES }}
