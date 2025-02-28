@@ -1,30 +1,49 @@
-# DLabs Environment Manager
+# dlabs-env
 
-A secure CLI tool for managing environment variables with encryption.
+A CLI tool for environment variable management
 
-## Features
-
-- 🔐 Secure encryption using AES-256-GCM
-- 🔑 Master password protection
+[![npm version](https://badge.fury.io/js/dlabs-env.svg)](https://www.npmjs.com/package/dlabs-env)
+[![GitHub license](https://img.shields.io/github/license/dscriptlabs/env)](https://github.com/dscriptlabs/env/blob/main/LICENSE)
 
 ## Installation
 
 ```bash
-npx dlabs-env init
+npm install -g dlabs-env
+# or
+yarn global add dlabs-env
 ```
 
-## Quick Start
+## Usage
 
 ```bash
-dlabs-env init
-
-
-## Security
-
-The dScriptLabs Environment Manager uses several security measures to protect your data:
-
-- **Master Password**: All data is encrypted using a master password
-- **Encryption**: AES-256-GCM encryption for all stored data
-
-
+dlabs-env init    # Initialize environment configuration
+dlabs-env status  # Check environment status
 ```
+
+## Features
+
+- Secure environment variable management
+- Easy initialization and configuration
+- Status checking and validation
+- Cross-platform support
+
+## Development
+
+```bash
+# Clone the repository
+git clone https://github.com/dscriptlabs/env.git
+
+# Install dependencies
+npm install
+
+# Run in development mode
+npm run dev
+```
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+MIT © [DscriptLabs](https://github.com/dscriptlabs)

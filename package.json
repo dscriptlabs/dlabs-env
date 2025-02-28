@@ -14,6 +14,13 @@
     "url": "https://github.com/dscriptlabs/env/issues"
   },
   "homepage": "https://github.com/dscriptlabs/env#readme",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "engines": {
+    "node": ">=14"
+  },
   "scripts": {
     "build": "tsc",
     "prepare": "npm run build",

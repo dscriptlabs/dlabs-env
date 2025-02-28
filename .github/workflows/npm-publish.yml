@@ -32,21 +32,26 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
-      - name: Increment version
+      - name: Handle version and publish
         id: version
         run: |
           CURRENT_VERSION=$(node -p "require('./package.json').version")
           echo "Current version: $CURRENT_VERSION"
-          npm version patch -m "Bump version to %s [skip ci]"
-          NEW_VERSION=$(node -p "require('./package.json').version")
-          echo "New version: $NEW_VERSION"
 
-      - name: Build
-        run: npm run build
+          # Try to unpublish if exists (ignore errors)
+          npm unpublish dlabs-env@$CURRENT_VERSION || true
 
-      - name: Publish to NPM
-        if: success()
-        run: npm publish --access public
+          # Build
+          npm run build
+
+          # Publish current version
+          npm publish --access public || {
+            # If publish fails, increment and try again
+            npm version patch -m "Bump version to %s [skip ci]"
+            NEW_VERSION=$(node -p "require('./package.json').version")
+            echo "Retrying with new version: $NEW_VERSION"
+            npm publish --access public
+          }
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
