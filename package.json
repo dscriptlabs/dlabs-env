@@ -1,11 +1,19 @@
 {
   "name": "dlabs-env",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A CLI tool for environment variable management",
   "main": "dist/index.js",
   "bin": {
     "dlabs-env": "dist/index.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dscriptlabs/env.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dscriptlabs/env/issues"
+  },
+  "homepage": "https://github.com/dscriptlabs/env#readme",
   "scripts": {
     "build": "tsc",
     "prepare": "npm run build",
