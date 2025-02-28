@@ -27,11 +27,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Auto-increment patch version
+      - name: Check version and increment
         run: |
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
-          npm version patch -m "Bump version to %s [skip ci]"
+          VERSION=$(node -p "require('./package.json').version")
+          if npm view dlabs-env@$VERSION version >/dev/null 2>&1; then
+            echo "Version $VERSION already exists, incrementing..."
+            npm version patch -m "Bump version to %s [skip ci]"
+          else
+            echo "Version $VERSION does not exist, incrementing anyway for consistency"
+            npm version patch -m "Bump version to %s [skip ci]"
+          fi
 
       - name: Build
         run: npm run build
