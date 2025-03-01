@@ -70,10 +70,13 @@ jobs:
           # Build with fresh files
           npm run build
 
-          # Verify the built version
+          # Verify the built version without executing the CLI
           if [ -f "dist/index.js" ]; then
             echo "Verifying built version..."
-            node -e "const pkg = require('./dist/index.js'); console.log('Built version:', pkg.version || 'Version not found');"
+            # Create a temporary verification script
+            echo "try { const pkg = require('./package.json'); console.log('Built version:', pkg.version); process.exit(0); } catch (e) { console.error(e); process.exit(1); }" > verify.js
+            node verify.js
+            rm verify.js
           fi
 
           # Publish to npm
