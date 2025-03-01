@@ -96,9 +96,9 @@ jobs:
           # Clean and rebuild to ensure version is updated in all files
           npm run build
 
-          # Commit and push changes
-          git add package.json dist/
-          git commit -m "chore: update package.json and dist files to version ${{ env.version }}" || echo "No changes to commit"
+          # Commit and push changes (only package files, not dist)
+          git add package.json package-lock.json
+          git commit -m "chore: update package.json to version ${{ env.version }}" || echo "No changes to commit"
           git push origin main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
