@@ -3,7 +3,7 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: 'dlabs-env',
   description: 'A CLI tool for environment variable management',
-  base: '/env/',
+  base: '/dlabs-env/',
   themeConfig: {
     nav: [
       { text: 'Home', link: '/' },
