@@ -134,14 +134,4 @@ dlabs-env --version
    - Check write permissions in home directory
    - Ensure adequate disk space
 
-### Getting Help
-
-If you encounter issues:
-
-1. Check the [troubleshooting guide](/guide/troubleshooting)
-2. Search [existing issues](https://github.com/dscriptlabs/dlabs-env/issues)
-3. Create a new issue if needed
-
-## Next Steps
-
 - [Commands](/reference/commands) - Explore available commands

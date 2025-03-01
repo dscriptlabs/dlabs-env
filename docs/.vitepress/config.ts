@@ -8,11 +8,6 @@ export default defineConfig({
   themeConfig: {
     logo: '/dlabs.png',
 
-    nav: [
-      { text: 'Home', link: '/' },
-      { text: 'Guide', link: '/guide/' },
-    ],
-
     sidebar: [
       {
         text: 'Introduction',
