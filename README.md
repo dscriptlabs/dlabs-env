@@ -1,44 +1,59 @@
 # dlabs-env
 
-A CLI tool for environment variable management
+A secure CLI tool for environment variable management with military-grade encryption.
 
-[![npm version](https://badge.fury.io/js/dlabs-env.svg)](https://www.npmjs.com/package/dlabs-env)
-[![GitHub license](https://img.shields.io/github/license/dscriptlabs/env)](https://github.com/dscriptlabs/env/blob/main/LICENSE)
+## Quick Start
 
-## Installation
-
-```bash
-npm install -g dlabs-env
-# or
-yarn global add dlabs-env
-```
-
-## Usage
+Use without installation (recommended):
 
 ```bash
-dlabs-env init    # Initialize environment configuration
-dlabs-env status  # Check environment status
+# Initialize environment configuration
+npx dlabs-env@latest init
+
+# Check environment status
+npx dlabs-env@latest status
 ```
 
 ## Features
 
-- Secure environment variable management
-- Easy initialization and configuration
-- Status checking and validation
-- Cross-platform support
+- 🔐 **Military-grade Security**: AES-256-GCM encryption for environment variables
+- 🔑 **Master Key Management**: Single master password for all configurations
+- 🚀 **Zero Installation**: Run directly with npx
+- 💼 **Cross-platform**: Works on macOS, Linux, and Windows
 
-## Development
+## System Requirements
+
+- Node.js v14 or higher
+- npm or yarn package manager
+
+## Documentation
+
+- [Getting Started Guide](https://dscriptlabs.github.io/dlabs-env/guide/installation)
+- [Command Reference](https://dscriptlabs.github.io/dlabs-env/reference/commands)
+  - [init](https://dscriptlabs.github.io/dlabs-env/reference/commands/init) - Initialize environment
+  - [status](https://dscriptlabs.github.io/dlabs-env/reference/commands/status) - Check configuration status
+
+## Global Installation (Optional)
+
+If you prefer having the tool installed globally:
 
 ```bash
-# Clone the repository
-git clone https://github.com/dscriptlabs/env.git
+# Using npm
+npm install -g dlabs-env
 
-# Install dependencies
-npm install
+# Using yarn
+yarn global add dlabs-env
 
-# Run in development mode
-npm run dev
+# Then use without npx
+dlabs-env init
+dlabs-env status
 ```
+
+## Security
+
+- Military-grade encryption (AES-256-GCM)
+- Secure master password with strong requirements
+- Local storage of encrypted configurations
 
 ## Contributing
 
@@ -46,4 +61,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-MIT © [DscriptLabs](https://github.com/dscriptlabs)
+MIT © [dscriptlabs](https://github.com/dscriptlabs)
