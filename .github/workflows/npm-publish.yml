@@ -63,7 +63,20 @@ jobs:
         if: success()
         run: |
           echo "Publishing version: ${{ env.version }}"
+
+          # Clean the dist directory if it exists
+          rm -rf dist || true
+
+          # Build with fresh files
           npm run build
+
+          # Verify the built version
+          if [ -f "dist/index.js" ]; then
+            echo "Verifying built version..."
+            node -e "const pkg = require('./dist/index.js'); console.log('Built version:', pkg.version || 'Version not found');"
+          fi
+
+          # Publish to npm
           npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -77,9 +90,12 @@ jobs:
           # Update package.json on main
           npm version ${{ env.version }} --no-git-tag-version --allow-same-version
 
+          # Clean and rebuild to ensure version is updated in all files
+          npm run build
+
           # Commit and push changes
-          git add package.json
-          git commit -m "chore: update package.json to version ${{ env.version }}" || echo "No changes to commit"
+          git add package.json dist/
+          git commit -m "chore: update package.json and dist files to version ${{ env.version }}" || echo "No changes to commit"
           git push origin main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
