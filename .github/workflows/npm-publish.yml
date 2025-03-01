@@ -73,8 +73,8 @@ jobs:
           # Verify the built version without executing the CLI
           if [ -f "dist/index.js" ]; then
             echo "Verifying built version..."
-            # Create a temporary verification script
-            echo "try { const pkg = require('./package.json'); console.log('Built version:', pkg.version); process.exit(0); } catch (e) { console.error(e); process.exit(1); }" > verify.js
+            # Create a temporary verification script using ES modules
+            echo "import { readFile } from 'fs/promises'; const pkg = JSON.parse(await readFile('./package.json')); console.log('Built version:', pkg.version);" > verify.js
             node verify.js
             rm verify.js
           fi
